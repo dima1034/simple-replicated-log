@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package log;
+
+service LogService {
+  rpc AppendMessage(MessageRequest) returns (MessageReply);
+}
+
+message MessageRequest {
+  string text = 1;
+}
+
+message MessageReply {
+  bool success = 1;
+}

@@ -1,8 +1,8 @@
 package Secondary
 
 import (
-	pb "./protos"
 	"context"
+	pb "github.com/dima1034/simple-replicated-log/Secondary/Protos"
 	"google.golang.org/grpc"
 	"log"
 	"net"
