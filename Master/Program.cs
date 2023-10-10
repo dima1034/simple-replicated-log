@@ -1,6 +1,7 @@
 using Grpc.Net.Client;
 using GrpcService1.Services;
 using Log;
+using Microsoft.AspNetCore.Mvc;
 using LogService = GrpcService1.Services.LogService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,7 +15,7 @@ builder.Services.AddGrpc();
 var app = builder.Build();
 
 List<string> logs = new();
-List<string> secondaryAddresses = new() { "http://secondary1:5000", "http://secondary2:5000" };
+List<string> secondaryAddresses = new() { "http://localhost:5300" };
 
 app.MapPost("/log", (string message) =>
 {
@@ -33,7 +34,8 @@ app.MapPost("/log", (string message) =>
         }
     }
 
-    return null;
+    Console.WriteLine(message);
+    return Results.Accepted();
 });
 
 app.MapGet("/log", () => logs);

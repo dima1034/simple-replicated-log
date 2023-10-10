@@ -4,6 +4,7 @@ import (
 	"context"
 	pb "github.com/dima1034/simple-replicated-log/Secondary/log_service/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 	"log"
 	"net"
 	"time"
@@ -21,13 +22,17 @@ func (s *server) AppendMessage(ctx context.Context, in *pb.MessageRequest) (*pb.
 }
 
 func main() {
-	lis, err := net.Listen("tcp", ":5000")
+	listener, err := net.Listen("tcp", ":5300")
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		grpclog.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
-	pb.RegisterLogServiceServer(s, &server{})
-	if err := s.Serve(lis); err != nil {
+
+	opts := []grpc.ServerOption{}
+	grpcServer := grpc.NewServer(opts...)
+
+	pb.RegisterLogServiceServer(grpcServer, &server{})
+
+	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
 }
