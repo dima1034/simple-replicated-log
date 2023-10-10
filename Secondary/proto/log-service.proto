@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package log;
+
+option go_package = "github.com/dima1034/simple-replicated-log/Secondary/log-service";
+
+service LogService {
+  rpc AppendMessage(MessageRequest) returns (MessageReply) {}
+}
+
+message MessageRequest {
+  string text = 1;
+}
+
+message MessageReply {
+  bool success = 1;
+}
