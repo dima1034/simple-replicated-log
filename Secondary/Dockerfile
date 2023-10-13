@@ -19,7 +19,7 @@ COPY . .
 RUN protoc --go_out=./log_service --go_opt=paths=source_relative --go-grpc_out=./log_service --go-grpc_opt=paths=source_relative -I=$PWD $PWD/proto/log-service.proto
 
 # Build the Go binary
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/secondary
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/secondary ./main.go
 
 FROM alpine:latest
 WORKDIR /app

@@ -11,11 +11,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGrpc();
+builder.Logging.ClearProviders().AddConsole();
 
 var app = builder.Build();
 
 List<string> logs = new();
-List<string> secondaryAddresses = new() { "http://localhost:5300" };
+List<string> secondaryAddresses = new() { "http://localhost:5300", "http://localhost:5301" };
+
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
 app.MapPost("/log", (string message) =>
 {
@@ -30,17 +33,16 @@ app.MapPost("/log", (string message) =>
     
         if (!reply.Success)
         {
+            logger.LogError("Failed to replicate message on secondary");
             return Results.Problem("Failed to replicate message on secondary");
         }
     }
 
-    Console.WriteLine(message);
+    logger.LogInformation($"Message '{message}' logged");
     return Results.Accepted();
 });
 
 app.MapGet("/log", () => logs);
-
-app.Run();
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<GreeterService>();
