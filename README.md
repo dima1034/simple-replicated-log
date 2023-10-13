@@ -1,4 +1,4 @@
-# Distributed Log System
+# Naive Distributed Log System
 
 This project is a basic implementation of a distributed log system with tunable semi-synchronicity for replication.
 
