@@ -33,14 +33,27 @@ func introduceDelay() {
 	time.Sleep(time.Duration(delay) * time.Second)
 }
 
+func (s *server) isDuplicate(id int64) bool {
+	for _, msg := range s.logs {
+		if msg.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *server) orderLogs() {
+	sort.SliceStable(s.logs, func(i, j int) bool {
+		return s.logs[i].Timestamp.Before(s.logs[j].Timestamp)
+	})
+}
+
 func (s *server) AppendMessage(ctx context.Context, in *pb.MessageRequest) (*pb.MessageReply, error) {
 
 	introduceDelay()
 
-	for _, msg := range s.logs {
-		if msg.ID == in.Id {
-			return &pb.MessageReply{Success: true}, nil
-		}
+	if s.isDuplicate(in.Id) {
+		return &pb.MessageReply{Success: true}, nil
 	}
 
 	newMessage := Message{
@@ -50,9 +63,7 @@ func (s *server) AppendMessage(ctx context.Context, in *pb.MessageRequest) (*pb.
 	}
 
 	s.logs = append(s.logs, newMessage)
-	sort.SliceStable(s.logs, func(i, j int) bool {
-		return s.logs[i].Timestamp.Before(s.logs[j].Timestamp)
-	})
+	s.orderLogs()
 
 	log.Printf("Appended message: %s\n", in.Text)
 
