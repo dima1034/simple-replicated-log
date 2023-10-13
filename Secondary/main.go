@@ -33,7 +33,7 @@ func introduceDelay() {
 	time.Sleep(time.Duration(delay) * time.Second)
 }
 
-func (s *server) isDuplicate(id int64) bool {
+func (s *server) isDuplicate(id string) bool {
 	for _, msg := range s.logs {
 		if msg.ID == id {
 			return true
