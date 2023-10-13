@@ -26,7 +26,8 @@ app.MapPost("/log", (string message, int w) =>
 
     int ackCount = 1; // Start with master ACK
     List<Task> replicationTasks = new List<Task>();
-
+    string sharedId = Guid.NewGuid().ToString();
+    
     foreach (var address in secondaryAddresses)
     {
         var channel = GrpcChannel.ForAddress(address);
@@ -35,7 +36,7 @@ app.MapPost("/log", (string message, int w) =>
         // Start replication asynchronously
         replicationTasks.Add(Task.Run(() => 
         {
-            var reply = client.AppendMessage(new MessageRequest { Text = message });
+            var reply = client.AppendMessage(new MessageRequest { Text = message, Id = sharedId });
             if (reply.Success)
             {
                 Interlocked.Increment(ref ackCount);

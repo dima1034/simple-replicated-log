@@ -10,6 +10,7 @@ import (
 	"os"
 	"sort"
 	"time"
+	"strconv"
 )
 
 type server struct {
@@ -18,24 +19,32 @@ type server struct {
 }
 
 type Message struct {
-	ID        int64
+	ID        string
 	Text      string
 	Timestamp time.Time
 }
 
+func introduceDelay() {
+	delayStr := os.Getenv("DELAY")
+	delay, err := strconv.Atoi(delayStr)
+	if err != nil || delay < 0 {
+		delay = 0
+	}
+	time.Sleep(time.Duration(delay) * time.Second)
+}
+
 func (s *server) AppendMessage(ctx context.Context, in *pb.MessageRequest) (*pb.MessageReply, error) {
 
-	time.Sleep(2 * time.Second)
+	introduceDelay()
 
-	// Check for duplication
 	for _, msg := range s.logs {
-		if msg.Text == in.Text {
+		if msg.ID == in.Id {
 			return &pb.MessageReply{Success: true}, nil
 		}
 	}
 
 	newMessage := Message{
-		ID:        time.Now().UnixNano(), // Just a placeholder for uniqueness
+		ID:        in.Id,
 		Text:      in.Text,
 		Timestamp: time.Now(),
 	}
@@ -45,7 +54,11 @@ func (s *server) AppendMessage(ctx context.Context, in *pb.MessageRequest) (*pb.
 		return s.logs[i].Timestamp.Before(s.logs[j].Timestamp)
 	})
 
-	log.Printf("Appended message: %s", in.Text)
+	log.Printf("Appended message: %s\n", in.Text)
+
+	for _, msg := range s.logs {
+		log.Printf("ID: %s, Text: %s, Timestamp: %s\n", msg.ID, msg.Text, msg.Timestamp.Format("2006-01-02 15:04:05"))
+	}
 
 	return &pb.MessageReply{Success: true}, nil
 }

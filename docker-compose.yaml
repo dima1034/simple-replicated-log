@@ -29,6 +29,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - PORT=5301
+      - DELAY=10
     ports:
       - "5301:5301"
     networks:
