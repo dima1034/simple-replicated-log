@@ -5,12 +5,17 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <RootNamespace>GrpcService1</RootNamespace>
+        <RootNamespace>Master</RootNamespace>
+        <LangVersion>11</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-        <Protobuf Include="proto\greet.proto" GrpcServices="Server" />
-        <Protobuf Include="proto\log-service.proto" GrpcServices="Client" />
+        <Protobuf Include="proto\greet.proto" GrpcServices="Server">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Protobuf>
+        <Protobuf Include="proto\log-service.proto" GrpcServices="Client">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Protobuf>
     </ItemGroup>
 
     <ItemGroup>

@@ -1,7 +1,7 @@
 using Grpc.Core;
 using Log;
 
-namespace GrpcService1.Services;
+namespace Master.Services;
 
 public class LogService : Log.LogService.LogServiceClient
 {

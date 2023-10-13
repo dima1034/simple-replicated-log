@@ -1,6 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Master", "Master.csproj", "{14A95B8B-3E91-48F3-BBB5-D2D62E825FB2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBF}") = "DockerCompose", "../DockerCompose.dcproj", "{14A95B8B-3E91-48F3-BBB5-D2D62E825FB3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

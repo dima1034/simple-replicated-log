@@ -22,7 +22,12 @@ func (s *server) AppendMessage(ctx context.Context, in *pb.MessageRequest) (*pb.
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":5300")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "5300" // default port
+	}
+	
+	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		grpclog.Fatalf("failed to listen: %v", err)
 	}

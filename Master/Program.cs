@@ -1,8 +1,8 @@
 using Grpc.Net.Client;
-using GrpcService1.Services;
 using Log;
+using Master.Services;
 using Microsoft.AspNetCore.Mvc;
-using LogService = GrpcService1.Services.LogService;
+using LogService = Master.Services.LogService;
 
 var builder = WebApplication.CreateBuilder(args);
 
