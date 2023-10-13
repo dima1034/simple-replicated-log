@@ -34,6 +34,6 @@ services:
     networks:
       - replicated-log-network
 
-networks:
-  replicated-log-network:
-    driver: bridge
+# networks:
+#   replicated-log-network:
+#     driver: bridge
