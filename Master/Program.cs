@@ -20,7 +20,7 @@ List<string> secondaryAddresses = new() { "http://secondary1:5300", "http://seco
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-app.MapPost("/log", (string message, int w) => // Added `w` parameter
+app.MapPost("/log", (string message, int w) =>
 {
     logs.Add(message);
 
