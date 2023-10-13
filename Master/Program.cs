@@ -20,25 +20,38 @@ List<string> secondaryAddresses = new() { "http://secondary1:5300", "http://seco
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-app.MapPost("/log", (string message) =>
+app.MapPost("/log", (string message, int w) => // Added `w` parameter
 {
     logs.Add(message);
+
+    int ackCount = 1; // Start with master ACK
+    List<Task> replicationTasks = new List<Task>();
 
     foreach (var address in secondaryAddresses)
     {
         var channel = GrpcChannel.ForAddress(address);
-        var client = new Log.LogService.LogServiceClient(channel); // Corrected this line
-    
-        var reply = client.AppendMessage(new MessageRequest { Text = message });
-    
-        if (!reply.Success)
+        var client = new Log.LogService.LogServiceClient(channel);
+
+        // Start replication asynchronously
+        replicationTasks.Add(Task.Run(() => 
         {
-            logger.LogError("Failed to replicate message on secondary");
-            return Results.Problem("Failed to replicate message on secondary");
-        }
+            var reply = client.AppendMessage(new MessageRequest { Text = message });
+            if (reply.Success)
+            {
+                Interlocked.Increment(ref ackCount);
+            }
+        }));
     }
 
-    logger.LogInformation($"Message '{message}' logged");
+    Task.WaitAll(replicationTasks.Take(w - 1).ToArray()); // Wait only for 'w - 1' tasks (acknowledgments)
+
+    if (ackCount < w)
+    {
+        logger.LogError("Failed to get enough ACKs");
+        return Results.Problem("Failed to replicate message based on write concern");
+    }
+
+    logger.LogInformation($"Message '{message}' logged with {ackCount} ACKs");
     return Results.Accepted();
 });
 
