@@ -89,7 +89,7 @@ artifacts/
 .idea/
 
 # User Secrets
-*.json
+# *.json
 
 # Windows image file caches
 Thumbs.db
@@ -175,7 +175,6 @@ out/
 *.dll
 *.exe
 *.pdb
-*.json
 *.runtimeconfig.dev.json
 *.deps.json
 *.csproj.user
@@ -221,8 +220,8 @@ _cgo_export.
 _testmain.go
 
 Go module Directory
-go.sum
-go.mod
+# go.sum
+# go.mod
 
 Binary
 bin/

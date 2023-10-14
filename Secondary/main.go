@@ -9,8 +9,8 @@ import (
 	"net"
 	"os"
 	"sort"
-	"time"
 	"strconv"
+	"time"
 )
 
 type server struct {
