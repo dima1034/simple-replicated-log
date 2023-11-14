@@ -59,7 +59,6 @@ app.MapPost("/log", (string message, int w) =>
 app.MapGet("/log", () => logs);
 
 // Configure the HTTP request pipeline.
-app.MapGrpcService<GreeterService>();
 app.MapGrpcService<LogService>();
 
 app.MapGet("/",
