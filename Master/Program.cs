@@ -16,7 +16,8 @@ builder.Logging.ClearProviders().AddConsole();
 var app = builder.Build();
 
 List<string> logs = new();
-List<string> secondaryAddresses = new() { "http://secondary1:5300", "http://secondary2:5301" };
+List<string> secondaryAddresses = app.Configuration.GetSection("SecondaryUrls").Get<List<string>>();
+// List<string> secondaryAddresses = new() { "http://secondary1:5300", "http://secondary2:5301" };
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 

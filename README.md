@@ -6,7 +6,7 @@ This project is a basic implementation of a distributed log system with tunable 
 
 Build and run the services:
 ```bash
-docker-compose up --build
+docker-compose up --build --force-recreate
 ```
 
 - By default, the master runs on port **5000**.
@@ -61,3 +61,12 @@ We need to perform the following tasks:
 - Implement Write Concerns on the primary server.
 - Introduce Artificial Delay for replicas to emulate inconsistency.
 - Handle Messages Deduplication and total ordering on secondary nodes.
+
+
+
+# Iteration 3
+
+
+# Changelog
+- Drop docker.override, as it seems to be confusing
+- Drop hardcoded urls from Master, and define them in appsettings

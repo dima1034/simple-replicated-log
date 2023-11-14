@@ -7,8 +7,7 @@
     <None Include="docker-compose.yaml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="docker-compose.override.yaml">
-      <DependentUpon>docker-compose.yaml</DependentUpon>
+    <Content Include="docker-compose.yaml">
     </Content>
   </ItemGroup>
 </Project>

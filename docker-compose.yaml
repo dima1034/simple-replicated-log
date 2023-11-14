@@ -4,9 +4,11 @@ services:
   master:
     build:
       context: ./Master
-      dockerfile: Dockerfile]
+      dockerfile: Dockerfile
     environment:
       - ASPNETCORE_URLS=http://+:5000
+      - SecondaryUrls__0=http://secondary1:5300
+      - SecondaryUrls__1=http://secondary2:5301
     ports:
       - "5000:5000"
     networks:
@@ -35,6 +37,6 @@ services:
     networks:
       - replicated-log-network
 
-# networks:
-#   replicated-log-network:
-#     driver: bridge
+networks:
+  replicated-log-network:
+    driver: bridge

@@ -10,9 +10,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Protobuf Include="proto\greet.proto" GrpcServices="Server">
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Protobuf>
         <Protobuf Include="proto\log-service.proto" GrpcServices="Client">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Protobuf>
