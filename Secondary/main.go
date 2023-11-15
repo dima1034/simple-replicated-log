@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
-	pb "github.com/dima1034/simple-replicated-log/Secondary/log_service/proto"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 	"log"
 	"net"
 	"os"
 	"sort"
 	"strconv"
 	"time"
+
+	pb "github.com/dima1034/simple-replicated-log/Secondary/log-service/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 )
 
 type server struct {
@@ -30,6 +31,19 @@ func introduceDelay() {
 	if err != nil || delay < 0 {
 		delay = 0
 	}
+
+	log.Printf("Introducing delay of %d seconds\n", delay)
+	time.Sleep(time.Duration(delay) * time.Second)
+}
+
+func introduceStartupDelay() {
+	delayStr := os.Getenv("STARTUP_DELAY")
+	delay, err := strconv.Atoi(delayStr)
+	if err != nil || delay < 0 {
+		delay = 0
+	}
+
+	log.Printf("Introducing delay of %d seconds\n", delay)
 	time.Sleep(time.Duration(delay) * time.Second)
 }
 
@@ -59,22 +73,70 @@ func (s *server) AppendMessage(ctx context.Context, in *pb.MessageRequest) (*pb.
 	newMessage := Message{
 		ID:        in.Id,
 		Text:      in.Text,
-		Timestamp: time.Now(),
+		Timestamp: in.Timestamp.AsTime(),
 	}
 
 	s.logs = append(s.logs, newMessage)
 	s.orderLogs()
 
-	log.Printf("Appended message: %s\n", in.Text)
-
 	for _, msg := range s.logs {
-		log.Printf("ID: %s, Text: %s, Timestamp: %s\n", msg.ID, msg.Text, msg.Timestamp.Format("2006-01-02 15:04:05"))
+		log.Printf("Appended message: %s, Timestamp: %s\n", msg.Text, msg.Timestamp.Format("2006-01-02 15:04:05"))
 	}
 
 	return &pb.MessageReply{Success: true}, nil
 }
 
+func (s *server) GetLastMessageID(ctx context.Context, in *pb.Empty) (*pb.LastMessageIDReply, error) {
+	var lastID string
+	if len(s.logs) > 0 {
+		lastID = s.logs[len(s.logs)-1].ID
+	}
+	return &pb.LastMessageIDReply{Id: lastID}, nil
+}
+
+func (s *server) BatchAppendMessages(ctx context.Context, in *pb.BatchMessageRequest) (*pb.MessageReply, error) {
+	for _, msg := range in.Messages {
+		if !s.isDuplicate(msg.Id) {
+			newMessage := Message{
+				ID:        msg.Id,
+				Text:      msg.Text,
+				Timestamp: msg.Timestamp.AsTime(),
+			}
+			s.logs = append(s.logs, newMessage)
+		}
+	}
+	s.orderLogs()
+
+	log.Printf("Appended %d messages\n", len(in.Messages))
+
+	for _, msg := range s.logs {
+		log.Printf("Appended message: %s, Timestamp: %s\n", msg.Text, msg.Timestamp.Format("2006-01-02 15:04:05"))
+	}
+
+	return &pb.MessageReply{Success: true}, nil
+}
+
+func (s *server) RestartServer(ctx context.Context, in *pb.Empty) (*pb.MessageReply, error) {
+	log.Println("Received restart request. Preparing to restart...")
+
+	go func() {
+		// Adding a short delay to ensure the response is sent back before stopping
+		time.Sleep(time.Second)
+
+		log.Println("Initiating graceful stop...")
+		grpcServer.GracefulStop()
+	}()
+
+	// Sending the response back before the server starts stopping
+	return &pb.MessageReply{Success: true}, nil
+}
+
+var grpcServer *grpc.Server
+
 func main() {
+
+	introduceStartupDelay()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "5300"

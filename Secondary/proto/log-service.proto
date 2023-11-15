@@ -1,18 +1,46 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package log;
 
 option go_package = "github.com/dima1034/simple-replicated-log/Secondary/log-service";
 
 service LogService {
-  rpc AppendMessage(MessageRequest) returns (MessageReply) {}
+  // RPC to append a single message.
+  rpc AppendMessage(MessageRequest) returns (MessageReply);
+
+  // RPC to retrieve the ID of the last message received by the secondary.
+  rpc GetLastMessageID(Empty) returns (LastMessageIDReply);
+
+  // RPC to replicate a batch of missed messages to the secondary.
+  rpc BatchAppendMessages(BatchMessageRequest) returns (MessageReply);
+
+  // RPC method to request a server restart
+  rpc RestartServer(Empty) returns (MessageReply);
 }
 
+// Empty message, can be used where no request parameters are needed.
+message Empty {}
+
+// Message structure used for appending a message and for batch replication.
 message MessageRequest {
   string id = 1;
   string text = 2;
+  google.protobuf.Timestamp timestamp = 3;
 }
 
+// Reply structure for append operations.
 message MessageReply {
   bool success = 1;
+}
+
+// Message for the reply containing the last message ID received by the secondary.
+message LastMessageIDReply {
+  string id = 1;
+}
+
+// Message for batch replication request.
+message BatchMessageRequest {
+  repeated MessageRequest messages = 1;
 }
