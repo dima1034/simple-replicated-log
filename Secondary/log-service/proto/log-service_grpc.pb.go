@@ -22,7 +22,6 @@ const (
 	LogService_AppendMessage_FullMethodName       = "/log.LogService/AppendMessage"
 	LogService_GetLastMessageID_FullMethodName    = "/log.LogService/GetLastMessageID"
 	LogService_BatchAppendMessages_FullMethodName = "/log.LogService/BatchAppendMessages"
-	LogService_RestartServer_FullMethodName       = "/log.LogService/RestartServer"
 )
 
 // LogServiceClient is the client API for LogService service.
@@ -35,8 +34,6 @@ type LogServiceClient interface {
 	GetLastMessageID(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*LastMessageIDReply, error)
 	// RPC to replicate a batch of missed messages to the secondary.
 	BatchAppendMessages(ctx context.Context, in *BatchMessageRequest, opts ...grpc.CallOption) (*MessageReply, error)
-	// RPC method to request a server restart
-	RestartServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*MessageReply, error)
 }
 
 type logServiceClient struct {
@@ -74,15 +71,6 @@ func (c *logServiceClient) BatchAppendMessages(ctx context.Context, in *BatchMes
 	return out, nil
 }
 
-func (c *logServiceClient) RestartServer(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*MessageReply, error) {
-	out := new(MessageReply)
-	err := c.cc.Invoke(ctx, LogService_RestartServer_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // LogServiceServer is the server API for LogService service.
 // All implementations must embed UnimplementedLogServiceServer
 // for forward compatibility
@@ -93,8 +81,6 @@ type LogServiceServer interface {
 	GetLastMessageID(context.Context, *Empty) (*LastMessageIDReply, error)
 	// RPC to replicate a batch of missed messages to the secondary.
 	BatchAppendMessages(context.Context, *BatchMessageRequest) (*MessageReply, error)
-	// RPC method to request a server restart
-	RestartServer(context.Context, *Empty) (*MessageReply, error)
 	mustEmbedUnimplementedLogServiceServer()
 }
 
@@ -110,9 +96,6 @@ func (UnimplementedLogServiceServer) GetLastMessageID(context.Context, *Empty) (
 }
 func (UnimplementedLogServiceServer) BatchAppendMessages(context.Context, *BatchMessageRequest) (*MessageReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BatchAppendMessages not implemented")
-}
-func (UnimplementedLogServiceServer) RestartServer(context.Context, *Empty) (*MessageReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RestartServer not implemented")
 }
 func (UnimplementedLogServiceServer) mustEmbedUnimplementedLogServiceServer() {}
 
@@ -181,24 +164,6 @@ func _LogService_BatchAppendMessages_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LogService_RestartServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LogServiceServer).RestartServer(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LogService_RestartServer_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LogServiceServer).RestartServer(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // LogService_ServiceDesc is the grpc.ServiceDesc for LogService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -217,10 +182,6 @@ var LogService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BatchAppendMessages",
 			Handler:    _LogService_BatchAppendMessages_Handler,
-		},
-		{
-			MethodName: "RestartServer",
-			Handler:    _LogService_RestartServer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

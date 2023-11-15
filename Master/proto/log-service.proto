@@ -13,9 +13,6 @@ service LogService {
 
   // RPC to replicate a batch of missed messages to the secondary.
   rpc BatchAppendMessages(BatchMessageRequest) returns (MessageReply);
-
-  // RPC method to request a server restart
-  rpc RestartServer(Empty) returns (MessageReply);
 }
 
 // Empty message, can be used where no request parameters are needed.

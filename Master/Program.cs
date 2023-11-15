@@ -25,24 +25,6 @@ var logger = app.Services.GetRequiredService<ILogger<Program>>() ?? throw new Nu
 var healthCheckCancellationTokenSource = new CancellationTokenSource();
 var healthCheckTask = PeriodicHealthCheckAsync(healthCheckCancellationTokenSource.Token);
 
-app.MapPost("/stop-secondary", async (HttpContext httpContext, int index) =>
-{
-    if(index > secondaryAddresses.Count) return Results.Problem("Index out of range");
-    
-    var channel = GrpcChannel.ForAddress(secondaryAddresses[index - 1]);
-    var client = new Log.LogService.LogServiceClient(channel);
-
-    var reply = await client.RestartServerAsync(new Empty());
-    if (reply.Success)
-    {
-        logger.LogInformation("Successfully stopped a secondary server");
-        return Results.Accepted("Successfully stopped a secondary server");
-    }
-
-    logger.LogError("Failed to stop a secondary server");
-    return Results.Problem("Failed to stop a secondary server");
-});
-
 app.MapPost("/log", async (HttpContext httpContext, string message, int w) =>
 {
     // Check if there's a quorum
@@ -200,7 +182,7 @@ async Task<string?> GetLastMessageIDFromSecondary(string secondaryAddress)
     }
     catch (RpcException ex)
     {
-        logger.LogError($"Failed to get last message ID from {secondaryAddress}: {ex.Status}");
+        logger.LogError($"Failed to get last message ID from {secondaryAddress}");
         // Handle exception (e.g., assume no messages received, retry logic)
         throw;
     }

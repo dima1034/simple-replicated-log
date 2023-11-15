@@ -116,23 +116,6 @@ func (s *server) BatchAppendMessages(ctx context.Context, in *pb.BatchMessageReq
 	return &pb.MessageReply{Success: true}, nil
 }
 
-func (s *server) RestartServer(ctx context.Context, in *pb.Empty) (*pb.MessageReply, error) {
-	log.Println("Received restart request. Preparing to restart...")
-
-	go func() {
-		// Adding a short delay to ensure the response is sent back before stopping
-		time.Sleep(time.Second)
-
-		log.Println("Initiating graceful stop...")
-		grpcServer.GracefulStop()
-	}()
-
-	// Sending the response back before the server starts stopping
-	return &pb.MessageReply{Success: true}, nil
-}
-
-var grpcServer *grpc.Server
-
 func main() {
 
 	introduceStartupDelay()
