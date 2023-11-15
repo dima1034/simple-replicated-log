@@ -62,11 +62,38 @@ We need to perform the following tasks:
 - Introduce Artificial Delay for replicas to emulate inconsistency.
 - Handle Messages Deduplication and total ordering on secondary nodes.
 
-
+<br>
+<br>
 
 # Iteration 3
+We need to perform the following tasks:
 
+- Exactly-once 
+- Heartbeats
+- Quorum
+- Deduplication
+- Ordering
+- Retry
+
+<br>
+<br>
 
 # Changelog
 - Drop docker.override, as it seems to be confusing
 - Drop hardcoded urls from Master, and define them in appsettings
+- Timestamp Handling in Secondary Server:<br>
+Introduced handling for timestamp.Timestamp in the secondary server's Message struct.
+Modified the AppendMessage and BatchAppendMessages methods to convert timestamp.Timestamp to Go's time.Time for correct timestamp handling.
+Adjusted logging to format the Timestamp field correctly.
+HTTP Endpoint for Logs in Secondary Server:
+
+- Added an HTTP server running alongside the gRPC server in the secondary server.<br>
+Implemented a new HTTP handler (handleGetLogs) to return all logged messages as JSON.
+Configured the HTTP server to listen on a separate port (default 8080 or as specified by the HTTP_PORT environment variable).
+Fixing Instance Sharing Between gRPC and HTTP Servers:
+
+- Corrected the instance sharing issue between gRPC and HTTP servers in the secondary server.<br>
+Ensured that both gRPC and HTTP servers share the same instance of the server struct, allowing them to manage and return the same set of logs.
+Minor Corrections and Improvements:
+
+- Made various minor code corrections and improvements, including adjusting logging statements and refining the implementation of server functions for better performance and readability.
