@@ -2,6 +2,7 @@ using Grpc.Core;
 using Grpc.Net.Client;
 using Log;
 using Master;
+using Microsoft.Extensions.Logging.Console;
 using LogService = Master.Services.LogService;
 using ID = System.String;
 
@@ -12,12 +13,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGrpc();
-builder.Logging.ClearProviders().AddConsole();
+builder.Logging.ClearProviders().AddConsole(options =>
+{
+    options.FormatterName = ConsoleFormatterNames.Systemd;
+});
 
 var app = builder.Build();
 
 Dictionary<ID, LogEntry> logs = new Dictionary<ID, LogEntry>();
 List<string> secondaryAddresses = app.Configuration.GetSection("SecondaryUrls").Get<List<string>>() ?? new();
+var healthCheckDelay = app.Configuration.GetSection("HealthCheckDelayInSeconds").Get<int?>() ?? 5;
+var healthCheckDelayInSeconds = TimeSpan.FromSeconds(healthCheckDelay);
 HashSet<ID> previouslyUnhealthyServers = new HashSet<ID>();
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>() ?? throw new NullReferenceException();
@@ -29,7 +35,7 @@ app.MapPost("/log", async (HttpContext httpContext, string message, int w) =>
 {
     // Check if there's a quorum
     int healthySecondaries = secondaryAddresses.Count - previouslyUnhealthyServers.Count;
-    int requiredQuorum = (secondaryAddresses.Count / 2) + 1; // Simple majority
+    int requiredQuorum = (secondaryAddresses.Count / 2); // + 1 Simple majority
 
     if (healthySecondaries < requiredQuorum)
     {
@@ -37,7 +43,6 @@ app.MapPost("/log", async (HttpContext httpContext, string message, int w) =>
         return Results.Problem("The system is currently in read-only mode due to insufficient secondary servers.");
     }
 
-    // var replicationTasks = new List<Task<bool>>();
     var cts = new CancellationTokenSource();
     var sharedId = Guid.NewGuid().ToString();
 
@@ -70,7 +75,7 @@ async Task<bool> ReplicateMessageWithRetryAsync(string address, string message, 
 {
     var backoff = new ExponentialBackoff();
     var attempts = 0;
-    var maxAttempts = 5;
+    var maxAttempts = 3;
 
     while (attempts < maxAttempts && !cts.IsCancellationRequested)
     {
@@ -134,7 +139,7 @@ async Task ReplicateMissedMessagesAsync(string secondaryAddress, string lastId, 
     var client = new Log.LogService.LogServiceClient(channel);
 
     var backoff = new ExponentialBackoff();
-    var maxAttempts = 5;
+    var maxAttempts = 3;
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++)
     {
@@ -219,7 +224,7 @@ async Task PeriodicHealthCheckAsync(CancellationToken cancellationToken)
 {
     while (!cancellationToken.IsCancellationRequested)
     {
-        await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken); // Check every 2 seconds, adjust as needed
+        await Task.Delay(healthCheckDelayInSeconds, cancellationToken); // Check every 2 seconds, adjust as needed
         await CheckSecondaryHealthAsync(cancellationToken);
     }
 }

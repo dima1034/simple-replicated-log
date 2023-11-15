@@ -20,8 +20,10 @@ services:
       dockerfile: Dockerfile
     environment:
       - PORT=5300
+      - HTTP_PORT=8080
     ports:
       - "5300:5300"
+      - "8080:8080"
     networks:
       - replicated-log-network
 
@@ -31,10 +33,11 @@ services:
       dockerfile: Dockerfile
     environment:
       - PORT=5301
-      - DELAY=10
-      - STARTUP_DELAY=10
+      - HTTP_PORT=8081
+      - STARTUP_DELAY=20
     ports:
       - "5301:5301"
+      - "8081:8081"
     networks:
       - replicated-log-network
 

@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"sort"
 	"strconv"
@@ -29,7 +31,7 @@ func introduceDelay() {
 	delayStr := os.Getenv("DELAY")
 	delay, err := strconv.Atoi(delayStr)
 	if err != nil || delay < 0 {
-		delay = 0
+		return
 	}
 
 	log.Printf("Introducing delay of %d seconds\n", delay)
@@ -40,7 +42,7 @@ func introduceStartupDelay() {
 	delayStr := os.Getenv("STARTUP_DELAY")
 	delay, err := strconv.Atoi(delayStr)
 	if err != nil || delay < 0 {
-		delay = 0
+		return
 	}
 
 	log.Printf("Introducing delay of %d seconds\n", delay)
@@ -116,6 +118,14 @@ func (s *server) BatchAppendMessages(ctx context.Context, in *pb.BatchMessageReq
 	return &pb.MessageReply{Success: true}, nil
 }
 
+// HTTP handler to return logs
+func (s *server) handleGetLogs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(s.logs); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func main() {
 
 	introduceStartupDelay()
@@ -131,13 +141,33 @@ func main() {
 		grpclog.Fatalf("failed to listen: %v", err)
 	}
 
+	// Create a new instance of the server struct
+	srv := &server{}
+
 	opts := []grpc.ServerOption{}
 	grpcServer := grpc.NewServer(opts...)
 
-	pb.RegisterLogServiceServer(grpcServer, &server{})
-	log.Println("Server registered and ready to accept connections.") // Logging server readiness
+	// Correctly use 'srv' while registering the gRPC server
+	pb.RegisterLogServiceServer(grpcServer, srv)
 
-	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+	// Start the gRPC server in a separate goroutine
+	go func() {
+		log.Println("gRPC server registered and ready to accept connections.")
+		if err := grpcServer.Serve(listener); err != nil {
+			log.Fatalf("Failed to serve gRPC: %v", err)
+		}
+	}()
+
+	// Setup HTTP server for logs using the same 'srv' instance
+	http.HandleFunc("/log", srv.handleGetLogs)
+
+	httpPort := os.Getenv("HTTP_PORT")
+	if httpPort == "" {
+		httpPort = "8080"
+	}
+
+	log.Printf("HTTP server starting on port %s", httpPort)
+	if err := http.ListenAndServe(":"+httpPort, nil); err != nil {
+		log.Fatalf("Failed to serve HTTP: %v", err)
 	}
 }
