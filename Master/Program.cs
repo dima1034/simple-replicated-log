@@ -161,11 +161,11 @@ async Task ReplicateMissedMessagesAsync(string secondaryAddress, string lastId, 
         {
             logger.LogError(
                 $"Failed to replicate missed messages to {secondaryAddress} on attempt {attempt}: {ex.Status}");
-            // If it's not a retryable exception or we've reached the max retries, break out of the loop
+            
             break;
         }
 
-        await Task.Delay(backoff.NextDelay(), cts); // Wait before retrying
+        await Task.Delay(backoff.NextDelay(), cts);
     }
 
     logger.LogError($"Failed to replicate missed messages to {secondaryAddress} after {maxAttempts} attempts.");
