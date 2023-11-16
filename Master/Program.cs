@@ -57,10 +57,6 @@ app.MapPost("/log", async (HttpContext httpContext, string message, int w) =>
     var ackTasks = await Task.WhenAll(requiredAcks);
     var ackCount = ackTasks.Count(success => success) + 1; // Including the master ACK
 
-    // ALTERNATIVE
-    // var ackCount = 1;
-    // Task.WaitAll(replicationTasks.Take(w - 1).ToArray()); // Wait only for 'w - 1' tasks (acknowledgments)
-
     if (ackCount < w)
     {
         logger.LogError("Failed to get enough ACKs");
@@ -188,7 +184,6 @@ async Task<string?> GetLastMessageIDFromSecondary(string secondaryAddress)
     catch (RpcException ex)
     {
         logger.LogError($"Failed to get last message ID from {secondaryAddress}");
-        // Handle exception (e.g., assume no messages received, retry logic)
         throw;
     }
 }
@@ -207,9 +202,6 @@ async Task CheckSecondaryHealthAsync(CancellationToken cancellationToken)
                 await ReplicateMissedMessagesAsync(address, messageId, cancellationToken);
                 previouslyUnhealthyServers.Remove(address);
             }
-            // else if (messageId is null) {
-            //     previouslyUnhealthyServers.Add(address);
-            // }
         }
         catch (RpcException)
         {
