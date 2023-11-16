@@ -9,14 +9,14 @@ SECONDARY2_URL="http://localhost:8081" # Replace with your actual S2 service URL
 send_message() {
     local msg=$1
     local w=$2
-    curl -X POST "$MASTER_URL/log?message=$msg&w=$w"
+    curl -X POST "$MASTER_URL/log?message=$msg&w=$w" 
     # curl -X POST "$MASTER_URL/log" -d "message=$msg&w=$w"
 }
 
 # Function to get logs from secondary
 get_logs_from_secondary() {
     local url=$1
-    curl -X GET "$url/log"
+    curl -X GET "$url/log" | python -mjson.tool 
 }
 
 # Starting M + S1 (assuming they are started automatically or already running)
