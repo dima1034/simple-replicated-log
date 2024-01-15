@@ -67,43 +67,58 @@ app.MapPost("/log", async (HttpContext httpContext, string message, int w) =>
     return Results.Accepted();
 });
 
+async Task<bool> SendMessageToSecondaryAsync(string address, string message, string id, CancellationToken cts)
+{
+    var channel = GrpcChannel.ForAddress(address);
+    var client = new Log.LogService.LogServiceClient(channel);
+
+    var messageRequest = new MessageRequest
+    {
+        Id = id,
+        Text = message,
+        Timestamp = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(logs[id].Timestamp)
+    };
+
+    var reply = await client.AppendMessageAsync(messageRequest, cancellationToken: cts);
+    return reply.Success;
+}
+
 async Task<bool> ReplicateMessageWithRetryAsync(string address, string message, string id, CancellationToken cts)
 {
     var backoff = new ExponentialBackoff();
     var attempts = 0;
     var maxAttempts = 3;
-
-    while (attempts < maxAttempts && !cts.IsCancellationRequested)
+    bool isSuspected = false;
+    
+    try
+    {
+        if (await SendMessageToSecondaryAsync(address, message, id, cts))
+        {
+            return true;
+        }
+        isSuspected = true;
+    }
+    catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
+    {
+        isSuspected = true;
+        logger.LogWarning($"Secondary at {address} is unavailable, marked as suspected...");
+    }
+    
+    while (isSuspected && attempts < maxAttempts && !cts.IsCancellationRequested)
     {
         try
         {
-            var channel = GrpcChannel.ForAddress(address);
-            var client = new Log.LogService.LogServiceClient(channel);
-            
-            var messageRequest = new MessageRequest
-            {
-                Id = id,
-                Text = message,
-                Timestamp = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(logs[id].Timestamp)
-            };
-            
-            var reply = await client.AppendMessageAsync(messageRequest, cancellationToken: cts);
-            if (reply.Success)
+            await Task.Delay(backoff.NextDelay(), cts);
+            if (await SendMessageToSecondaryAsync(address, message, id, cts))
             {
                 return true;
             }
-        }
-        catch (RpcException ex) when (ex.StatusCode == StatusCode.Unavailable)
-        {
-            logger.LogWarning($"Secondary at {address} is unavailable, retrying attempt {attempts + 1}...");
-            await Task.Delay(backoff.NextDelay(), cts);
         }
         catch (OperationCanceledException)
         {
             logger.LogWarning($"Replication to {address} was canceled.");
             break;
         }
-
         attempts++;
     }
 
